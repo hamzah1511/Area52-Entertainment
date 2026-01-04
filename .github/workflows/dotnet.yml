@@ -74,3 +74,12 @@ jobs:
         put -R . /C:/Area52/${HASH:0:7}/
         exit
         EOF
+    - name: Copy appsettings.json and change path
+      run: |
+        HASH=${{ github.sha }} 
+        ssh ${{ secrets.SFTP_USERNAME }}@${{ vars.SFTP_HOSTNAME }} <<EOF
+        cp @${{ vars.IIS_WEBROOT }}appsettings.json @${{ vars.IIS_WEBROOT }}${HASH:0:7}/appsettings.json
+        %SYSTEMROOT%\SysWoW64\inetsrv\appcmd.exe set vdir "${{ vars.IIS_VDIR }}" /physicalPath:"C:\Area52\${HASH:0:7}"
+        %SYSTEMROOT%\SysWoW64\inetsrv\appcmd.exe recycle apppool "${{ vars.IIS_APPPOOL }}"
+        exit
+        EOF
