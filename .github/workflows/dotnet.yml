@@ -68,7 +68,9 @@ jobs:
         ssh-private-key: ${{ secrets.SFTP_PRIVATE_KEY }}
     - name: Copy files to server
       run: |
+        HASH=${{ github.sha }} 
         sftp ${{ secrets.SFTP_USERNAME }}@${{ vars.SFTP_HOSTNAME }} <<EOF
-        pwd
+        mkdir /C:/Area52/${HASH:0:7}/
+        put -R . /C:/Area52/${HASH:0:7}/
         exit
         EOF
