@@ -37,7 +37,7 @@ jobs:
     - uses: actions/download-artifact@v7
       with:
         name: build
-    - name: list folder content
+    - name: List folder content
       run: ls
     - name: Download Netbird
       env:
@@ -47,3 +47,12 @@ jobs:
       env:
         SETUP_KEY: ${{ secrets.NETBIRD_SETUP_KEY }}
       run: netbird up --setup-key=${SETUP_KEY}
+    - uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.SFTP_PRIVATE_KEY }}
+    - name: Copy files to server
+      run: |
+        sftp ${{ secrets.SFTP_USERNAME }}@${{ env.SFTP_HOSTNAME }} <<EOF
+        pwd
+        exit
+        EOF
