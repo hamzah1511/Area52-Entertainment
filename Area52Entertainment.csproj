@@ -4,7 +4,6 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-	<ExcludeFilesFromDeployment>appsettings.json</ExcludeFilesFromDeployment>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,9 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="appsettings.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Content>
+    <Content Update="appsettings.json" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
 </Project>
