@@ -53,7 +53,8 @@ jobs:
         DNS_IP=""
         COUNTER=0
         while [ -z $DNS_IP ] && [ $COUNTER -lt 60 ]; do
-          DNS_IP=$(nslookup "${{ vars.SFTP_HOSTNAME }}" | tee /dev/stdout | awk '/^Address: / { print $2 }')
+          nslookup ${{ vars.SFTP_HOSTNAME }}
+          DNS_IP=$(nslookup ${{ vars.SFTP_HOSTNAME }} | awk '/^Address: / { print $2 }')
           [ -z "$DNS_IP" ] && sleep 1
           ((COUNTER++))
         done
