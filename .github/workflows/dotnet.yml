@@ -77,7 +77,7 @@ jobs:
     - name: Copy appsettings.json and change path
       run: |
         ssh ${{ secrets.SFTP_USERNAME }}@${{ vars.SFTP_HOSTNAME }} <<EOF
-        copy @${{ vars.IIS_WEBROOT }}appsettings.json @${{ vars.IIS_WEBROOT }}${{ steps.vars.outputs.sha_short }}/appsettings.json
+        copy ${{ vars.IIS_WEBROOT }}appsettings.json ${{ vars.IIS_WEBROOT }}${{ steps.vars.outputs.sha_short }}/appsettings.json
         %SYSTEMROOT%\SysWoW64\inetsrv\appcmd.exe set vdir "${{ vars.IIS_VDIR }}" /physicalPath:"${{ vars.IIS_WEBROOT }}${{ steps.vars.outputs.sha_short }}"
         exit
         EOF
