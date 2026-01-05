@@ -64,7 +64,9 @@ jobs:
         ssh-private-key: ${{ secrets.SFTP_PRIVATE_KEY }}
     - name: Convert webroot to POSIX path
       id: posixpath
-      run: WEBROOT=${{ vars.IIS_WEBROOT }} && echo "posix_webroot=${WEBROOT//\\//}" >> $GITHUB_OUTPUT
+      env:
+        WEBROOT: ${{ vars.IIS_WEBROOT }}
+      run: echo "posix_webroot=${WEBROOT//\\//}" >> $GITHUB_OUTPUT
     - name: Copy files to server
       run: |
         sftp ${{ secrets.SFTP_USERNAME }}@${{ vars.SFTP_HOSTNAME }} <<EOF
