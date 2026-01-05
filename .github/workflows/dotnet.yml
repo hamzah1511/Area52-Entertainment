@@ -37,8 +37,10 @@ jobs:
     - uses: actions/download-artifact@v7
       with:
         name: build
-    - name: List folder content
-      run: ls
+    - name: Get short commit hash
+      id: vars
+      run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
     - name: Download Netbird
       env:
         USE_BIN_INSTALL: true
@@ -68,18 +70,15 @@ jobs:
         ssh-private-key: ${{ secrets.SFTP_PRIVATE_KEY }}
     - name: Copy files to server
       run: |
-        HASH=${{ github.sha }} 
         sftp ${{ secrets.SFTP_USERNAME }}@${{ vars.SFTP_HOSTNAME }} <<EOF
-        mkdir /C:/Area52/${HASH:0:7}/
-        put -R . /C:/Area52/${HASH:0:7}/
+        mkdir /C:/Area52/${{ steps.vars.outputs.sha_short }}/
+        put -R . /C:/Area52/${{ steps.vars.outputs.sha_short }}/
         exit
         EOF
     - name: Copy appsettings.json and change path
       run: |
-        HASH=${{ github.sha }} 
         ssh ${{ secrets.SFTP_USERNAME }}@${{ vars.SFTP_HOSTNAME }} <<EOF
-        cp @${{ vars.IIS_WEBROOT }}appsettings.json @${{ vars.IIS_WEBROOT }}${HASH:0:7}/appsettings.json
-        %SYSTEMROOT%\SysWoW64\inetsrv\appcmd.exe set vdir "${{ vars.IIS_VDIR }}" /physicalPath:"C:\Area52\${HASH:0:7}"
-        %SYSTEMROOT%\SysWoW64\inetsrv\appcmd.exe recycle apppool "${{ vars.IIS_APPPOOL }}"
+        copy @${{ vars.IIS_WEBROOT }}appsettings.json @${{ vars.IIS_WEBROOT }}${{ steps.vars.outputs.sha_short }}/appsettings.json
+        %SYSTEMROOT%\SysWoW64\inetsrv\appcmd.exe set vdir "${{ vars.IIS_VDIR }}" /physicalPath:"C:\Area52\${{ steps.vars.outputs.sha_short }}"
         exit
         EOF
