@@ -65,14 +65,14 @@ jobs:
     - name: Copy files to server
       run: |
         sftp ${{ secrets.SFTP_USERNAME }}@${{ vars.SFTP_HOSTNAME }} <<EOF
-        mkdir /C:/Area52/${{ steps.vars.outputs.sha_short }}/
-        put -R . /C:/Area52/${{ steps.vars.outputs.sha_short }}/
+        mkdir /${{ vars.IIS_WEBROOT }}${{ steps.vars.outputs.sha_short }}/
+        put -R . /${{ vars.IIS_WEBROOT }}${{ steps.vars.outputs.sha_short }}/
         exit
         EOF
     - name: Copy appsettings.json and change path
       run: |
         ssh ${{ secrets.SFTP_USERNAME }}@${{ vars.SFTP_HOSTNAME }} <<EOF
         copy @${{ vars.IIS_WEBROOT }}appsettings.json @${{ vars.IIS_WEBROOT }}${{ steps.vars.outputs.sha_short }}/appsettings.json
-        %SYSTEMROOT%\SysWoW64\inetsrv\appcmd.exe set vdir "${{ vars.IIS_VDIR }}" /physicalPath:"C:\Area52\${{ steps.vars.outputs.sha_short }}"
+        %SYSTEMROOT%\SysWoW64\inetsrv\appcmd.exe set vdir "${{ vars.IIS_VDIR }}" /physicalPath:"${{ vars.IIS_WEBROOT }}${{ steps.vars.outputs.sha_short }}"
         exit
         EOF
