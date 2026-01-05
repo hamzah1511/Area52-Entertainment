@@ -1,19 +1,12 @@
-# This workflow will build a .NET project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
-
-name: .NET
+name: Build and deploy to IIS
 
 on:
   push:
-    branches: [ "ci-cd" ]
-  pull_request:
-    branches: [ "ci-cd" ]
+    branches: [ "main" ]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
     - name: Setup .NET
@@ -22,7 +15,64 @@ jobs:
         dotnet-version: 8.0.x
     - name: Restore dependencies
       run: dotnet restore
-    - name: Build
-      run: dotnet build --no-restore
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
+    - name: Build publishable build
+      run: dotnet publish Area52Entertainment.csproj --no-restore -o build/
+    - uses: actions/upload-artifact@v4
+      with:
+        name: build
+        path: build/
+        if-no-files-found: error
+        
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v7
+      with:
+        name: build
+    - name: Get short commit hash
+      id: vars
+      run: HASH=${{ github.sha }} && echo "sha_short=${HASH:0:7}" >> $GITHUB_OUTPUT
+
+    - name: Download Netbird
+      env:
+        USE_BIN_INSTALL: true
+      run: curl -fsSL https://pkgs.netbird.io/install.sh | sh
+    - name: Connect to Netbird
+      env:
+        SETUP_KEY: ${{ secrets.NETBIRD_SETUP_KEY }}
+      run: netbird up --setup-key=${SETUP_KEY}
+    - name: Wait until reachable
+      shell: bash
+      run: |
+        PORT=22
+        COUNTER=0
+        until nc -z "${{ vars.SFTP_HOSTNAME }}" "$PORT" >/dev/null 2>&1 || [ "$COUNTER" -ge 60 ]; do
+          sleep 1
+          ((++COUNTER))
+        done
+        nc -z "${{ vars.SFTP_HOSTNAME }}" "$PORT" >/dev/null 2>&1 \
+          && echo "${{ vars.SFTP_HOSTNAME }}:$PORT reachable" \
+          || { echo "timeout"; exit 1; }
+    - name: Import host keys
+      env:
+        HOST_KEYS: ${{ vars.SFTP_HOST_KEYS }}
+      run: mkdir -p ~/.ssh && printf "$HOST_KEYS" >> ~/.ssh/known_hosts
+    - uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.SFTP_PRIVATE_KEY }}
+    - name: Copy files to server
+      run: |
+        sftp ${{ secrets.SFTP_USERNAME }}@${{ vars.SFTP_HOSTNAME }} <<EOF
+        mkdir /C:/Area52/${{ steps.vars.outputs.sha_short }}/
+        put -R . /C:/Area52/${{ steps.vars.outputs.sha_short }}/
+        exit
+        EOF
+    - name: Copy appsettings.json and change path
+      run: |
+        ssh ${{ secrets.SFTP_USERNAME }}@${{ vars.SFTP_HOSTNAME }} <<EOF
+        copy @${{ vars.IIS_WEBROOT }}appsettings.json @${{ vars.IIS_WEBROOT }}${{ steps.vars.outputs.sha_short }}/appsettings.json
+        %SYSTEMROOT%\SysWoW64\inetsrv\appcmd.exe set vdir "${{ vars.IIS_VDIR }}" /physicalPath:"C:\Area52\${{ steps.vars.outputs.sha_short }}"
+        exit
+        EOF
