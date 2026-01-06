@@ -31,5 +31,4 @@ Deze repository wordt gebruikt voor samenwerking binnen het project:
 Feedback en wijzigingen worden iteratief verwerkt.
 
 ## Status
-Huidige status: **werkende prototype / eerste realisatie**  
-Verdere testen en verbeteringen volgen in samenwerking met het team.
+Huidige status: Webapp Iteratief gerealiseerd.
